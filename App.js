@@ -1,20 +1,42 @@
-import { StatusBar } from 'expo-status-bar';
-import { StyleSheet, Text, View } from 'react-native';
+import {NavigationContainer} from "@react-navigation/native";
+import MainNavigator from "./navigators/MainNavigator";
+import {SQLiteProvider} from 'expo-sqlite'
+
+const initializeDatabase = async (db) => {
+    await db.execAsync(`
+                CREATE TABLE IF NOT EXISTS Tasks (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    title TEXT,
+                    state BOOLEAN
+        )
+    `);
+
+    await db.execAsync(`
+                CREATE TABLE IF NOT EXISTS Categories (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    name TEXT NOT NULL UNIQUE
+        )
+    `);
+
+    await db.execAsync(`
+                CREATE TABLE IF NOT EXISTS Notes (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    categoryId INTEGER,
+                    title TEXT,
+                    content TEXT,
+                    FOREIGN KEY (categoryId) REFERENCES Categories(id) ON DELETE CASCADE
+        )
+    `);
+
+    await db.execAsync(`PRAGMA foreign_keys = ON`)
+};
 
 export default function App() {
   return (
-    <View style={styles.container}>
-      <Text>Open up App.js to start working on your app!</Text>
-      <StatusBar style="auto" />
-    </View>
+      <SQLiteProvider databaseName="localDB.db" onInit={initializeDatabase}>
+          <NavigationContainer>
+              <MainNavigator />
+          </NavigationContainer>
+      </SQLiteProvider>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#fff',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-});
